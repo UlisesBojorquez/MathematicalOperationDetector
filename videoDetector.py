@@ -2,32 +2,57 @@ import cv2 as cv
 import imutils
 import pytesseract
 from pytesseract.pytesseract import image_to_string
-
+import os
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
 '''Obtain the input'''
 # Video capture
 camera = cv.VideoCapture(0)
+widthSize = 640
+heightSize = 480
 # Declare the counter
 img_counter = 0
 # Declare name of the input image taken
 img_name = "input.png"
 # Manage error
 successful = False
-while(True):
+
+if camera.isOpened() == False:               
+    print ("error: capWebcam not accessed successfully\n")      
+    os.system("pause")       
+    
+while(camera.isOpened()):
     #Read frame by frame
-    ret, frame = camera.read()
+    ret, image = camera.read()
+    
+    image = imutils.resize(image, width = widthSize, height=heightSize)   
+    reg = image
     if not ret:
         print("Failed to grab frame")
         break
     # Display screen
-    cv.imshow("Instructions: SPACE = Take picture, ESC = Exit",frame)
+    x, y, w, h = int(widthSize/4)-int(widthSize/8), int(heightSize/3), int(widthSize/4)*3 , int(heightSize/3)
+    sub_img = image[y:y+h, x:x+w]
+    
+    y_ref = y+h
+    x_ref = x+w
+    
+    temp = image.copy()
+    temp2 = image.copy()
+
+    image = cv.GaussianBlur(image, (9, 9), 0)
+    image[y_ref:y, x_ref:x] = temp[y_ref:y, x_ref:x]
+    image = cv.rectangle(image, (x_ref, y_ref), (x, y), (242, 135, 115), 2)
+    image[y:y+h, x:x+w] = reg[y:y+h, x:x+w]
+    
+    cv.imshow("Instructions: SPACE = Take picture, ESC = Exit",image)
     key = cv.waitKey(1)
     if key%256 == 27: # 27 is the ESC Key pressed
         print("Escape hit")
         break
     elif key%256 == 32: # 32 is the SPACE Key pressed
-            cv.imwrite(img_name, frame)
+            imgRes = image[y:y+h, x:x+w]
+            cv.imwrite(img_name, imgRes)
             successful = True
             print("Screenshot taken")
 
@@ -87,7 +112,7 @@ def preProcessing(img):
             aspect_ratio = float(w)/h
             print("ratio"+ str(aspect_ratio))
             if aspect_ratio > 2.4:
-                operacion = gray[y+20:y+h-20,x+20:x+w-20]
+                operacion = gray[globalY:globalYH, globalX:globalXW]
                 operacionPost = postProcessing(operacion)
                 text = pytesseract.image_to_string(operacionPost, config='--psm 11')
                 print('text=',text)
