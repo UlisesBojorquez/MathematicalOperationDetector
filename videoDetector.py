@@ -36,6 +36,7 @@ camera.release()
 cv.destroyAllWindows()
 
 '''Functions'''
+
 def postProcessing(img):
 
     # Threshold to obtain binary image
@@ -58,7 +59,7 @@ def preProcessing(img):
     # Load the image
     image = cv.imread(img) #operacion.png pic.jpg
     # Pre-processing the image
-    image = imutils.resize(image,width=700,height=500)
+    #image = imutils.resize(image,width=700,height=500)
     # Convert it to gray scale
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     cv.imshow("gray", gray)
@@ -66,6 +67,7 @@ def preProcessing(img):
     blurred = cv.GaussianBlur(gray, (5,5), 0)
     # Canny edge detector for the edge of the input
     edged = cv.Canny(blurred, 50, 200, 255)
+    cv.imshow("edged", edged)
     # Detect contours
     cnts,_=cv.findContours(edged,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE)
     #Iterate the countours founded
@@ -75,17 +77,17 @@ def preProcessing(img):
         # Get values from each contours painted
         x,y,w,h = cv.boundingRect(c)
         # Epsilon
-        epsilon = 0.0805*cv.arcLength(c,True)
+        epsilon = 0.045*cv.arcLength(c,True)
         # Allows us to calculate the vertices of the contours
         approx = cv.approxPolyDP(c,epsilon,True)
         print("------------------")
-        if len(approx) == 4: #and area> 70000 and area<100000
+        if len(approx) == 4 and area>90000: #and area> 70000 and area<100000
             print('area=',area)
             cv.drawContours(image,[c],0,(0,255,0),2)
             aspect_ratio = float(w)/h
             print("ratio"+ str(aspect_ratio))
             if aspect_ratio > 2.4:
-                operacion = gray[y+10:y+h-20,x+10:x+w-20]
+                operacion = gray[y+20:y+h-20,x+20:x+w-20]
                 operacionPost = postProcessing(operacion)
                 text = pytesseract.image_to_string(operacionPost, config='--psm 11')
                 print('text=',text)
