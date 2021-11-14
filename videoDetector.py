@@ -35,7 +35,23 @@ while(True):
 camera.release()
 cv.destroyAllWindows()
 
-'''Function'''
+'''Functions'''
+def postProcessing(img):
+
+    # Threshold to obtain binary image
+    thresh = cv.threshold(img, 0, 255,cv.THRESH_BINARY | cv.THRESH_OTSU)[1]
+    cv.imshow("thresh", thresh)
+
+    # Create custom kernel
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
+    # Perform closing (dilation followed by erosion)
+    close = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
+
+    # Invert image to use for Tesseract
+    result = 255 - close
+
+    return result
+
 def preProcessing(img):
     print("[ <3 ] Staring pre-processing")
 
@@ -45,6 +61,7 @@ def preProcessing(img):
     image = imutils.resize(image,width=700,height=500)
     # Convert it to gray scale
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    cv.imshow("gray", gray)
     # Apply gaussian blur
     blurred = cv.GaussianBlur(gray, (5,5), 0)
     # Canny edge detector for the edge of the input
@@ -58,16 +75,19 @@ def preProcessing(img):
         # Get values from each contours painted
         x,y,w,h = cv.boundingRect(c)
         # Epsilon
-        epsilon = 0.065*cv.arcLength(c,True)
+        epsilon = 0.0805*cv.arcLength(c,True)
         # Allows us to calculate the vertices of the contours
         approx = cv.approxPolyDP(c,epsilon,True)
-        if len(approx) == 4 and area> 70000 and area<100000: #and area> 10000 and area<100000
+        print("------------------")
+        if len(approx) == 4: #and area> 70000 and area<100000
             print('area=',area)
             cv.drawContours(image,[c],0,(0,255,0),2)
             aspect_ratio = float(w)/h
+            print("ratio"+ str(aspect_ratio))
             if aspect_ratio > 2.4:
-                operacion = gray[y:y+h,x:x+w]
-                text = pytesseract.image_to_string(operacion, config='--psm 11')
+                operacion = gray[y+10:y+h-20,x+10:x+w-20]
+                operacionPost = postProcessing(operacion)
+                text = pytesseract.image_to_string(operacionPost, config='--psm 11')
                 print('text=',text)
                 cv.imshow("operacion", operacion)
                 cv.moveWindow("operacion",780,100)
