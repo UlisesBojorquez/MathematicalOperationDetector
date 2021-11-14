@@ -5,6 +5,7 @@ from pytesseract.pytesseract import image_to_string
 import os
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
+
 '''Obtain the input'''
 # Video capture
 camera = cv.VideoCapture(0)
@@ -15,7 +16,7 @@ img_counter = 0
 # Declare name of the input image taken
 img_name = "input.png"
 # Manage error
-successful = False
+successful = FalseglobalY,globalH, globalX,globalW = int(widthSize/4)-int(widthSize/8), int(heightSize/3), int(widthSize/4)*3 , int(heightSize/3)
 
 if camera.isOpened() == False:               
     print ("error: capWebcam not accessed successfully\n")      
@@ -112,7 +113,7 @@ def preProcessing(img):
             aspect_ratio = float(w)/h
             print("ratio"+ str(aspect_ratio))
             if aspect_ratio > 2.4:
-                operacion = gray[globalY:globalYH, globalX:globalXW]
+                operacion = gray[globalY:globalY+globalH, globalX:globalX+globalW]
                 operacionPost = postProcessing(operacion)
                 text = pytesseract.image_to_string(operacionPost, config='--psm 11')
                 print('text=',text)
