@@ -1,5 +1,6 @@
 import cv2 as cv
 import imutils
+from numpy import number
 import pytesseract
 from pytesseract.pytesseract import image_to_string
 import os
@@ -63,6 +64,7 @@ cv.destroyAllWindows()
 
 '''Functions'''
 
+
 def postProcessing(img):
 
     # Threshold to obtain binary image
@@ -117,6 +119,7 @@ def preProcessing(img):
                 operacionPost = postProcessing(operacion)
                 text = pytesseract.image_to_string(operacionPost, config='--psm 11')
                 print('text=',text)
+                #solve(text)
                 cv.imshow("operacion", operacion)
                 cv.moveWindow("operacion",780,100)
                 cv.rectangle(image,(x,y),(x+w,y+h),(0,255,0),3)
@@ -130,4 +133,4 @@ def preProcessing(img):
 if not successful:
     print("[ ! ] Not input image taken. Try again")
 else:
-    preProcessing(img_name)
+    preProcessing("input2.png")
