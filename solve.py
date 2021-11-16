@@ -27,5 +27,3 @@ def solve(input):
         return "Answer: "+str(float(solution))
     else:
         return "[ ! ] Incorrect syntaxis"
-
-print(solve("1+1"))
