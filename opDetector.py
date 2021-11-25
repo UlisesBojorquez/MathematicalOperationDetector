@@ -19,16 +19,45 @@ img_name = "input.png"
 # Manage error
 successful = False
 globalY,globalH, globalX,globalW = int(widthSize/4)-int(widthSize/8), int(heightSize/3), int(widthSize/4)*3 , int(heightSize/3)
+#brightness/contrast variables
+bright_val = 30 #0-100
+cont_val = 1.5 #1.0 - 3.0
 
-if camera.isOpened() == False:               
-    print ("error: capWebcam not accessed successfully\n")      
-    os.system("pause")       
-    
+if camera.isOpened() == False:
+    print ("error: capWebcam not accessed successfully\n")
+    os.system("pause")
+
+'''brightness function'''
+def brightness(frame, value):
+    hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+    h, s, v = cv.split(hsv)
+
+    lim = 255 - value
+    v[v > lim] = 255
+    v[v <= lim] += value
+
+    final_hsv = cv.merge((h, s, v))
+    img = cv.cvtColor(final_hsv,cv.COLOR_HSV2BGR)
+    return img
+
+'''camera work'''
 while(camera.isOpened()):
     #Read frame by frame
     ret, image = camera.read()
-    
-    image = imutils.resize(image, width = widthSize, height=heightSize)   
+
+    #brightness/contrast adjustment
+    if bright_val<0:
+        bright_val=0
+    elif bright_val>100:
+        bright_val=100
+    if cont_val < 1.0:
+        cont_val = 1.0
+    elif cont_val > 3.0:
+        cont_val = 3.0
+    bright = brightness(image, bright_val)
+    image = cv.convertScaleAbs(bright, alpha=cont_val, beta=0)
+
+    image = imutils.resize(image, width = widthSize, height=heightSize)
     reg = image
     if not ret:
         print("Failed to grab frame")
@@ -36,10 +65,10 @@ while(camera.isOpened()):
     # Display screen
     x, y, w, h = int(widthSize/4)-int(widthSize/8), int(heightSize/3), int(widthSize/4)*3 , int(heightSize/3)
     sub_img = image[y:y+h, x:x+w]
-    
+
     y_ref = y+h
     x_ref = x+w
-    
+
     temp = image.copy()
     temp2 = image.copy()
 
@@ -48,7 +77,7 @@ while(camera.isOpened()):
     image = cv.rectangle(image, (x_ref, y_ref), (x, y), (242, 135, 115), 2)
     image[y:y+h, x:x+w] = reg[y:y+h, x:x+w]
     cv.rectangle(image,(x,y),(x+w,y+h),(0,0,0),3)
-    cv.imshow("Instructions: SPACE = Take picture, ESC = Exit",image)
+    cv.imshow("SPACE = Take picture, ESC = Exit, W and S = BRIGHTNESS, A and D = CONTRAST",image)
     key = cv.waitKey(1)
     if key%256 == 27: # 27 is the ESC Key pressed
         print("Escape hit")
@@ -58,6 +87,14 @@ while(camera.isOpened()):
             cv.imwrite(img_name, imgRes)
             successful = True
             print("Screenshot taken")
+    elif key%256 == 115: # key "s"
+       bright_val -= 5
+    elif key%256 == 119: #key "w"
+        bright_val += 5
+    elif key%256 == 97: #key "a"
+        cont_val -= 0.2
+    elif key%256 == 100: #key "d"
+        cont_val += 0.2
 
 # Realease camera
 camera.release()
@@ -76,7 +113,7 @@ def solve(input):
 
     # Delimitator
     operators="+-*/"
-    
+
     if input[0] in operators:
         print("[ ! ] Incorrect syntaxis")
         return False, input, ""
@@ -117,7 +154,7 @@ def postProcessing(img):
 def preProcessing(img):
     print("[ <3 ] Staring pre-processing")
     # Load the image
-    image = cv.imread(img) #operacion.png pic.jpg
+    image = cv.imread(img)
     # Convert image to gray scale
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     # Apply gaussian blur
@@ -141,7 +178,7 @@ def preProcessing(img):
         if len(approx) == 4 and area>70000.0:
             aspect_ratio = float(w)/h
             if aspect_ratio > 3.0:
-                operacion = gray 
+                operacion = gray
                 operacionPost = postProcessing(operacion)
                 text = pytesseract.image_to_string(operacionPost, config='--psm 11')
                 status,problem,solution = solve(text)
@@ -152,13 +189,13 @@ def preProcessing(img):
                 else:
                     cv.rectangle(image,(x,y),(x+w,y+h),(0,255,0),3)
                     cv.putText(image,"Syntaxis Error",(x+20,y+40),1,2.2,(0,255,0),3)
-                    break   
+                    break
         count += 1
     if count == len(cnts):
         cv.rectangle(image,(x,y),(x+w,y+h),(0,255,0),3)
         cv.putText(image,"No results",(x+20,y+40),1,2.2,(0,255,0),3)
 
-    cv.imshow("Image", image)
+    cv.imshow("Image results", image)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
